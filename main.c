@@ -1,27 +1,18 @@
-//question 3
+//question 2
 #include "msp430G2553.h"
+
 void main(void)
 {
- WDTCTL = WDTPW + WDTHOLD;  // Stop WDT
- P1DIR |= BIT6;             // P1.6 to output
- TA0CTL = TASSEL_2 + MC_1 + ID_3 + TACLR; //+TACLR; SMLCK, up mode, frequency division of 8
- TA0CCR0 = 31250; // Set maximum count value (PWM Period)
- TA0CCR1 = 6250; // initialize counter compare value 31250/6250 = 20%
- TA0CCTL0 |= CCIE; //timer 1
- TA0CCTL1 |= CCIE; //timer 2
- TA0CCTL0 &=~CCIFG; //timer 1 limit reset
- TA0CCTL1 &=~CCIFG; //timer 2 limit reset
- _enable_interrupts(); // Enter LPM0 SMCLK,ACLK active with 56 micro amp current
+    WDTCTL = WDTPW + WDTHOLD;  // Stop WDT
+     P1DIR |= BIT6;             // P1.6 set for output
+     P1OUT = 0x00;
+     P1SEL |= BIT6;             // select TA0.1 output signal
+     TACCR0 = 62500-1;             // PWM Time Period/ frequency, 500ms
+     TACCTL1 = OUTMOD_7;          // reset/set mode 7 for output signal
+     TACCR1 = 6250-1;                // PWM Duty cycle is 10% 62500/6250 = 10%
+     TACTL = TASSEL_2 + ID_3 + MC_1;   // SMCLK and Up Mode, id_3 is used for frequency division and divides it by 8
+
+     while(1){
+         P1OUT ^= BIT6; //display on led and on pin 1.6
+     }
 }
-#pragma vector = TIMER0_A0_VECTOR       //define the interrupt service vector
-__interrupt void TA0_ISR (void)    // interrupt service routine
-    {
-    P1OUT |=BIT6; //turn on at timer 1
-    TA0CCTL0 &=~CCIFG; //timer 1
-    }
-#pragma vector = TIMER0_A1_VECTOR       //define the interrupt service vector
-__interrupt void TA1_ISR (void)    // interrupt service routine
-    {
-    P1OUT &=~BIT6; //turn off at timer 2
-    TA0CCTL1 &=~CCIFG; //timer 2
-    }
